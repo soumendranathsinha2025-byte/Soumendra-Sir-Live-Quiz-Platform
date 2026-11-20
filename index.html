@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soumendra Sir Biology Classes - Interactive Quiz Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+            bio: {
+              leaf: '#10b981',
+              accent: '#0284c7',
+              dark: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .bio-gradient {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #0f172a 100%);
+    }
+    .bio-card-glow {
+      box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.15);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .animate-pulse-ring {
+      animation: pulse-ring 2.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP HEADER & BRANDING BAR -->
+  <header class="bio-gradient text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand Logo & Title -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchRole(appState.role)">
+        <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-md text-emerald-400">
+          <i data-lucide="dna" class="w-6 h-6 animate-pulse"></i>
+        </div>
+        <div>
+          <h1 class="font-heading font-extrabold text-lg sm:text-xl tracking-tight leading-none text-white flex items-center gap-2">
+            Soumendra Sir <span class="text-emerald-400 font-semibold">Biology Classes</span>
+          </h1>
+          <p class="text-xs text-emerald-200 font-medium">Classes 9, 10, 11 & 12 • Interactive Learning Arena</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons & Role Status -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Share Link Button -->
+        <button onclick="copyStudentJoinLink()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-xs sm:text-sm font-medium transition text-emerald-100 hover:text-white">
+          <i data-lucide="share-2" class="w-4 h-4 text-emerald-300"></i>
+          <span>Copy Student Link</span>
+        </button>
+
+        <!-- Role Toggle Switcher -->
+        <div class="bg-slate-900/60 p-1 rounded-xl border border-white/10 flex items-center text-xs">
+          <button id="roleTeacherBtn" onclick="switchRole('teacher')" class="px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+            <span>Teacher</span>
+          </button>
+          <button id="roleStudentBtn" onclick="switchRole('student')" class="px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1">
+            <i data-lucide="user" class="w-3.5 h-3.5"></i>
+            <span>Student</span>
+          </button>
+        </div>
+
+        <!-- Room Code Badge -->
+        <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs font-mono text-emerald-200 border border-white/10">
+          <span class="text-slate-400">ROOM:</span>
+          <strong id="roomCodeDisplay" class="text-white">BIO-9021</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- CLASS FILTER TABS (Common Header Filter) -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-1 sm:pb-0 w-full md:w-auto">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-2 flex items-center gap-1">
+          <i data-lucide="filter" class="w-3.5 h-3.5"></i> Grade:
+        </span>
+        <button onclick="setTargetClass('ALL')" class="class-filter-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition" data-class="ALL">All Classes</button>
+        <button onclick="setTargetClass('Class 9')" class="class-filter-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition" data-class="Class 9">Class 9</button>
+        <button onclick="setTargetClass('Class 10')" class="class-filter-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition" data-class="Class 10">Class 10</button>
+        <button onclick="setTargetClass('Class 11')" class="class-filter-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition" data-class="Class 11">Class 11</button>
+        <button onclick="setTargetClass('Class 12')" class="class-filter-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition" data-class="Class 12">Class 12</button>
+      </div>
+
+      <!-- Live Sync & Multi-Tab Notification Info -->
+      <div class="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        <span>Local Sync Active (Open 2 tabs to test real-time join & questions!)</span>
+      </div>
+    </div>
+
+    <!-- ================= TEACHER DASHBOARD VIEW ================= -->
+    <div id="teacherView" class="space-y-6">
+
+      <!-- Top Stats & Live Waiting Room Banner -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        <!-- Connected / Admitted Counter -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Students</p>
+            <h3 id="statAdmittedCount" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+            <p class="text-xs text-emerald-600 font-medium mt-1">Admitted & Ready</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="users" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Waiting Room Request Count -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Waiting Room</p>
+            <h3 id="statWaitingCount" class="text-3xl font-extrabold text-amber-600 mt-1">0</h3>
+            <p class="text-xs text-amber-600 font-medium mt-1">Pending Approval</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i data-lucide="user-plus" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Current Active Question Status -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Live Broadcast Status</p>
+            <h3 id="statBroadcastStatus" class="text-lg font-bold text-slate-800 mt-1 truncate max-w-[180px]">No Question Live</h3>
+            <p id="statBroadcastSub text-xs text-slate-500" class="text-xs text-slate-500 mt-1">Click "Broadcast" to start</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+            <i data-lucide="radio" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- WAITING ROOM PERMISSION PANEL (SOUMENDRA SIR'S CONTROL) -->
+      <div class="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
+        <div class="bg-amber-500/10 px-6 py-4 border-b border-amber-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 rounded-full bg-amber-500 animate-ping"></div>
+            <div>
+              <h2 class="font-heading font-bold text-slate-800 text-base flex items-center gap-2">
+                <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600"></i>
+                Student Admission Control (Waiting Room)
+              </h2>
+              <p class="text-xs text-slate-600">Approve students before they can enter the live biology quiz session.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="admitAllStudents()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1 shadow-sm">
+              <i data-lucide="check-check" class="w-4 h-4"></i> Admit All
+            </button>
+            <button onclick="clearWaitingRoom()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
+              Clear Queue
+            </button>
+          </div>
+        </div>
+
+        <!-- Waiting Student Requests List -->
+        <div id="waitingRoomList" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[90px]">
+          <!-- Dynamic JS Injection for pending requests -->
+          <div class="col-span-full py-6 text-center text-slate-400 text-sm italic">
+            No students currently in waiting room. Share student link above to allow students to join!
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN TEACHER WORKSPACE TABS -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: QUESTION BANK & CREATOR (8 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+
+          <!-- CREATE NEW QUESTION ACCORDION / CARD -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <h3 class="font-heading font-bold text-slate-800 text-lg flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-600"></i>
+                Create New Biology Question
+              </h3>
+              <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                Soumendra Sir Authoring Tool
+              </span>
+            </div>
+
+            <form id="createQuestionForm" onsubmit="handleCreateQuestion(event)" class="space-y-4">
+              
+              <!-- Question Type & Class Selection -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Target Class</label>
+                  <select id="qClass" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <option value="Class 9">Class 9</option>
+                    <option value="Class 10">Class 10</option>
+                    <option value="Class 11" selected>Class 11</option>
+                    <option value="Class 12">Class 12</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Question Format</label>
+                  <select id="qType" onchange="toggleQTypeFields()" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <option value="mcq">Multiple Choice (MCQ)</option>
+                    <option value="subjective">Subjective / Short Answer</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Question Text -->
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Question Text</label>
+                <textarea id="qText" required rows="2" placeholder="e.g. Which organelle is responsible for ATP synthesis in plant cell mitochondria?" class="w-full rounded-xl border border-slate-300 p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"></textarea>
+              </div>
+
+              <!-- Diagram Selection / Upload Section -->
+              <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center justify-between">
+                  <span>Attach Biology Diagram</span>
+                  <span class="text-[10px] text-slate-400 font-normal">Optional</span>
+                </label>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <!-- Preset Diagrams -->
+                  <div>
+                    <label class="text-xs text-slate-500 block mb-1">Choose Preset Diagram:</label>
+                    <select id="presetDiagram" onchange="handlePresetDiagramChange()" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                      <option value="">-- No Preset Diagram --</option>
+                      <option value="plant_cell">Plant Cell Structure</option>
+                      <option value="human_heart">Human Heart Cross-Section</option>
+                      <option value="dna_helix">DNA Double Helix</option>
+                      <option value="neuron">Neuron Structure</option>
+                      <option value="chloroplast">Chloroplast Diagram</option>
+                    </select>
+                  </div>
+
+                  <!-- Custom Image File Upload -->
+                  <div>
+                    <label class="text-xs text-slate-500 block mb-1">Or Upload Image File:</label>
+                    <input type="file" id="diagramFileUpload" accept="image/*" onchange="handleCustomFileUpload(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                  </div>
+                </div>
+
+                <!-- Preview Box -->
+                <div id="diagramPreviewContainer" class="hidden mt-2 p-2 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div id="diagramPreviewThumb" class="w-12 h-12 rounded bg-slate-100 border flex items-center justify-center overflow-hidden"></div>
+                    <span id="diagramPreviewLabel" class="text-xs font-medium text-slate-700">Diagram attached</span>
+                  </div>
+                  <button type="button" onclick="removeAttachedDiagram()" class="text-red-500 hover:text-red-700 p-1 rounded">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- MCQ Options Container -->
+              <div id="mcqFields" class="space-y-3">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Answer Options (Select Correct Radio)</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <input type="radio" name="correctOption" value="0" checked class="accent-emerald-600 w-4 h-4">
+                    <input type="text" id="opt0" required placeholder="Option A" class="w-full bg-transparent text-sm focus:outline-none">
+                  </div>
+                  <div class="flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <input type="radio" name="correctOption" value="1" class="accent-emerald-600 w-4 h-4">
+                    <input type="text" id="opt1" required placeholder="Option B" class="w-full bg-transparent text-sm focus:outline-none">
+                  </div>
+                  <div class="flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <input type="radio" name="correctOption" value="2" class="accent-emerald-600 w-4 h-4">
+                    <input type="text" id="opt2" required placeholder="Option C" class="w-full bg-transparent text-sm focus:outline-none">
+                  </div>
+                  <div class="flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <input type="radio" name="correctOption" value="3" class="accent-emerald-600 w-4 h-4">
+                    <input type="text" id="opt3" required placeholder="Option D" class="w-full bg-transparent text-sm focus:outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subjective Key Model Answer Container (Hidden by default) -->
+              <div id="subjectiveFields" class="hidden space-y-2">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Model Answer / Key Evaluation Points</label>
+                <textarea id="modelAnswer" rows="2" placeholder="Enter key grading points or essential keywords for student reference..." class="w-full rounded-xl border border-slate-300 p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"></textarea>
+              </div>
+
+              <div class="flex justify-end pt-2">
+                <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition shadow-md flex items-center gap-2">
+                  <i data-lucide="plus" class="w-4 h-4"></i> Add to Question Bank
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- QUESTION BANK LIST & LIVE BROADCAST CONTROLLER -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+              <div>
+                <h3 class="font-heading font-bold text-slate-800 text-lg flex items-center gap-2">
+                  <i data-lucide="book-open" class="w-5 h-5 text-emerald-600"></i>
+                  Biology Question Repository
+                </h3>
+                <p class="text-xs text-slate-500">Filter by class and broadcast directly to student screens.</p>
+              </div>
+              <button onclick="resetQuestionBankToDefault()" class="text-xs text-slate-500 hover:text-emerald-700 underline">
+                Reload Preset Questions
+              </button>
+            </div>
+
+            <div id="questionBankList" class="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+              <!-- Dynamically populated questions list -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: LIVE LEADERBOARD & STUDENT RESULTS (4 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+
+          <!-- Live Classroom Leaderboard -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sticky top-20">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <div>
+                <h3 class="font-heading font-bold text-slate-800 text-lg flex items-center gap-2">
+                  <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i>
+                  Live Leaderboard
+                </h3>
+                <p class="text-xs text-slate-500">Real-time student rankings & accuracy</p>
+              </div>
+
+              <button onclick="exportLeaderboardCSV()" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-600"></i>
+                Export CSV
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-400 border-b border-slate-100 uppercase font-semibold">
+                    <th class="pb-2">Rank</th>
+                    <th class="pb-2">Student</th>
+                    <th class="pb-2">Class</th>
+                    <th class="pb-2 text-right">Score</th>
+                  </tr>
+                </thead>
+                <tbody id="teacherLeaderboardBody" class="divide-y divide-slate-100">
+                  <!-- JS Dynamic Rows -->
+                </tbody>
+              </table>
+            </div>
+
+            <div id="emptyLeaderboardNotice" class="py-8 text-center text-slate-400 text-xs italic">
+              No quiz scores recorded yet. Broadcast a question to start scoring!
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= STUDENT PORTAL VIEW ================= -->
+    <div id="studentView" class="hidden space-y-6 max-w-3xl mx-auto">
+
+      <!-- STEP 1: STUDENT REGISTRATION / JOIN SCREEN -->
+      <div id="studentRegisterCard" class="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8">
+        <div class="text-center space-y-2 mb-6">
+          <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3 shadow-inner">
+            <i data-lucide="graduation-cap" class="w-8 h-8"></i>
+          </div>
+          <h2 class="font-heading font-extrabold text-2xl text-slate-800">Join Biology Live Classroom</h2>
+          <p class="text-sm text-slate-500">Enter your details to request access from <strong>Soumendra Sir</strong>.</p>
+        </div>
+
+        <form onsubmit="handleStudentRegister(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Full Name</label>
+            <input type="text" id="stName" required placeholder="e.g. Ananya Sharma" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Class</label>
+              <select id="stClass" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <option value="Class 9">Class 9</option>
+                <option value="Class 10">Class 10</option>
+                <option value="Class 11" selected>Class 11</option>
+                <option value="Class 12">Class 12</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Roll Number</label>
+              <input type="text" id="stRoll" required placeholder="e.g. 24" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base rounded-xl transition shadow-lg flex items-center justify-center gap-2 mt-4">
+            <i data-lucide="send" class="w-5 h-5"></i> Request Permission to Join
+          </button>
+        </form>
+      </div>
+
+      <!-- STEP 2: WAITING ROOM SCREEN (WHEN PENDING APPROVAL) -->
+      <div id="studentWaitingCard" class="hidden bg-white rounded-3xl border border-amber-200 shadow-xl p-8 text-center space-y-6">
+        <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+          <div class="absolute inset-0 rounded-full bg-amber-400/20 animate-pulse-ring"></div>
+          <div class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md relative z-10">
+            <i data-lucide="clock" class="w-8 h-8 animate-spin"></i>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold tracking-wide uppercase">Waiting Room Lobby</span>
+          <h2 class="font-heading font-extrabold text-2xl text-slate-800">Waiting for Soumendra Sir's Permission...</h2>
+          <p class="text-sm text-slate-600 max-w-md mx-auto">
+            Hi <strong id="waitingStudentNameDisplay" class="text-emerald-700">Student</strong>! Your admission request has been sent to Soumendra Sir. Please stay on this screen while Sir admits you into the room.
+          </p>
+        </div>
+
+        <!-- Biology Trivia Box to keep students engaged -->
+        <div class="bg-emerald-50/80 rounded-2xl p-4 border border-emerald-200 text-left space-y-1">
+          <p class="text-xs font-bold uppercase text-emerald-800 flex items-center gap-1">
+            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600"></i> Biology Quick Fact:
+          </p>
+          <p id="bioTriviaText" class="text-xs text-slate-700 italic">
+            "Human DNA is about 99.9% identical from person to person. Only 0.1% makes all the unique genetic differences!"
+          </p>
+        </div>
+
+        <!-- Demo Instant Self-Admit Button for single tab evaluation -->
+        <div class="pt-2 border-t border-slate-100">
+          <p class="text-xs text-slate-400 mb-2">Testing on a single device/tab?</p>
+          <button onclick="simulateSelfAdmit()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
+            ⚡ Quick Test: Auto-Admit Me Now
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: ACTIVE QUIZ ARENA (WHEN ADMITTED & QUESTION LIVE) -->
+      <div id="studentQuizCard" class="hidden bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+        
+        <!-- Question Top Bar -->
+        <div class="bg-slate-900 text-white p-5 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-3">
+            <span id="stQuestionClassBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-white">
+              Class 11
+            </span>
+            <span id="stQuestionTypeBadge" class="text-xs font-medium text-slate-300 uppercase tracking-wider">
+              MCQ Question
+            </span>
+          </div>
+
+          <div class="flex items-center space-x-2 text-emerald-400 font-mono text-sm font-semibold">
+            <i data-lucide="clock" class="w-4 h-4"></i>
+            <span>Live Session Active</span>
+          </div>
+        </div>
+
+        <!-- Question Content Body -->
+        <div class="p-6 sm:p-8 space-y-6">
+          
+          <!-- Question Title -->
+          <h3 id="stQuestionTitle" class="font-heading font-bold text-xl sm:text-2xl text-slate-800 leading-snug">
+            Question text loading...
+          </h3>
+
+          <!-- Diagram Display (If attached) -->
+          <div id="stDiagramBox" class="hidden p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col items-center justify-center space-y-2">
+            <div id="stDiagramHolder" class="max-h-64 overflow-hidden rounded-xl border border-slate-200 bg-white p-2">
+              <!-- Attached Diagram SVG/Image -->
+            </div>
+            <p class="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+              <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i> Reference Diagram Attached by Soumendra Sir
+            </p>
+          </div>
+
+          <!-- MCQ Options Screen -->
+          <div id="stMcqContainer" class="space-y-3">
+            <div class="grid grid-cols-1 gap-3" id="stMcqOptionsList">
+              <!-- Dynamic MCQ Choice Buttons -->
+            </div>
+          </div>
+
+          <!-- Subjective Text Answer Container -->
+          <div id="stSubjectiveContainer" class="hidden space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Type Your Answer</label>
+            <textarea id="stSubjectiveInput" rows="4" placeholder="Write your biology answer in detail here..." class="w-full rounded-xl border border-slate-300 p-4 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+            <button onclick="submitSubjectiveAnswer()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md">
+              Submit Answer for Review
+            </button>
+          </div>
+
+          <!-- Answer Feedback Banner -->
+          <div id="stFeedbackBox" class="hidden p-4 rounded-2xl border text-sm font-medium flex items-center justify-between">
+            <div id="stFeedbackText" class="flex items-center gap-2"></div>
+            <span id="stFeedbackScore" class="font-bold"></span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- STEP 4: WAITING FOR NEXT QUESTION / STANDBY SCREEN -->
+      <div id="studentStandbyCard" class="hidden bg-white rounded-3xl border border-slate-200 shadow-xl p-8 text-center space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+          <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+        </div>
+        <h3 class="font-heading font-bold text-xl text-slate-800">Answer Recorded!</h3>
+        <p class="text-sm text-slate-500 max-w-md mx-auto">
+          Great job! Soumendra Sir will broadcast the next question shortly. Please stay on this tab.
+        </p>
+      </div>
+
+      <!-- Student Mini Leaderboard Preview -->
+      <div id="studentLeaderboardCard" class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h4 class="font-heading font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
+          <i data-lucide="award" class="w-4 h-4 text-amber-500"></i> Class Leaderboard Standings
+        </h4>
+        <div id="studentLeaderboardList" class="space-y-2 text-xs">
+          <!-- JS Dynamic preview -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER BRANDING -->
+  <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+      <p class="font-medium text-slate-300">Soumendra Sir Biology Classes • Interactive Learning Portal</p>
+      <p class="text-slate-500">Designed for NCERT & Competitive Biology Prep (Classes 9–12). Ready for GitHub Pages deployment.</p>
+    </div>
+  </footer>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs">
+    <i data-lucide="info" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toastMsg">Notification message</span>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    /* ==========================================================================
+       1. PRESET BIOLOGY DIAGRAMS (HIGH-QUALITY SVG DATA SOURCES)
+       ========================================================================== */
+    const BIOLOGY_DIAGRAMS = {
+      plant_cell: `<svg viewBox="0 0 300 200" class="w-full h-full max-h-52">
+        <rect width="300" height="200" fill="#f0fdf4" rx="12"/>
+        <!-- Cell Wall -->
+        <polygon points="30,20 270,20 285,100 270,180 30,180 15,100" stroke="#047857" stroke-width="6" fill="#d1fae5"/>
+        <!-- Cell Membrane -->
+        <polygon points="36,26 264,26 278,100 264,174 36,174 22,100" stroke="#059669" stroke-width="2" fill="#ecfdf5"/>
+        <!-- Vacuole -->
+        <ellipse cx="160" cy="100" rx="65" ry="45" fill="#bae6fd" stroke="#0284c7" stroke-width="2" opacity="0.8"/>
+        <text x="140" y="104" font-size="10" font-weight="bold" fill="#0369a1">Vacuole</text>
+        <!-- Nucleus -->
+        <circle cx="75" cy="80" r="24" fill="#fbcfe8" stroke="#db2777" stroke-width="2"/>
+        <circle cx="75" cy="80" r="8" fill="#9d174d"/>
+        <text x="60" y="115" font-size="10" font-weight="bold" fill="#9d174d">Nucleus</text>
+        <!-- Chloroplasts -->
+        <ellipse cx="230" cy="60" rx="14" ry="8" fill="#22c55e"/>
+        <ellipse cx="220" cy="140" rx="14" ry="8" fill="#22c55e"/>
+        <text x="210" y="45" font-size="9" fill="#15803d">Chloroplast</text>
+        <!-- Mitochondria -->
+        <ellipse cx="90" cy="145" rx="16" ry="9" fill="#f97316"/>
+        <text x="70" y="166" font-size="9" fill="#c2410c">Mitochondria</text>
+      </svg>`,
+
+      human_heart: `<svg viewBox="0 0 300 200" class="w-full h-full max-h-52">
+        <rect width="300" height="200" fill="#fff1f2" rx="12"/>
+        <!-- Heart Silhouette outline -->
+        <path d="M 150 175 C 90 130 40 100 55 55 C 68 20 120 25 150 65 C 180 25 232 20 245 55 C 260 100 210 130 150 175 Z" fill="#fda4af" stroke="#e11d48" stroke-width="3"/>
+        <!-- Chambers dividing lines -->
+        <path d="M 150 65 L 150 170" stroke="#be123c" stroke-width="3" stroke-dasharray="4"/>
+        <path d="M 70 95 L 230 95" stroke="#be123c" stroke-width="2" stroke-dasharray="3"/>
+        <!-- Labels -->
+        <text x="80" y="80" font-size="11" font-weight="bold" fill="#9f1239">Right Atrium</text>
+        <text x="165" y="80" font-size="11" font-weight="bold" fill="#9f1239">Left Atrium</text>
+        <text x="75" y="130" font-size="11" font-weight="bold" fill="#881337">Right Ventricle</text>
+        <text x="165" y="130" font-size="11" font-weight="bold" fill="#881337">Left Ventricle</text>
+        <!-- Aorta arch -->
+        <path d="M 135 60 Q 150 20 175 35" fill="none" stroke="#2563eb" stroke-width="6"/>
+        <text x="175" y="25" font-size="9" font-weight="bold" fill="#1d4ed8">Aorta</text>
+      </svg>`,
+
+      dna_helix: `<svg viewBox="0 0 300 200" class="w-full h-full max-h-52">
+        <rect width="300" height="200" fill="#f0f9ff" rx="12"/>
+        <!-- Double Helix Strands -->
+        <path d="M 40 40 Q 90 160 150 100 T 260 160" fill="none" stroke="#0284c7" stroke-width="4"/>
+        <path d="M 40 160 Q 90 40 150 100 T 260 40" fill="none" stroke="#0d9488" stroke-width="4"/>
+        <!-- Base Pair Rungs -->
+        <line x1="60" y1="75" x2="60" y2="125" stroke="#6366f1" stroke-width="3"/>
+        <line x1="105" y1="125" x2="105" y2="75" stroke="#ec4899" stroke-width="3"/>
+        <line x1="150" y1="100" x2="150" y2="100" stroke="#8b5cf6" stroke-width="4"/>
+        <line x1="195" y1="75" x2="195" y2="125" stroke="#10b981" stroke-width="3"/>
+        <line x1="240" y1="135" x2="240" y2="65" stroke="#f59e0b" stroke-width="3"/>
+        <!-- Labels -->
+        <text x="70" y="30" font-size="10" font-weight="bold" fill="#0369a1">5' End</text>
+        <text x="70" y="185" font-size="10" font-weight="bold" fill="#0f766e">3' End</text>
+        <text x="120" y="185" font-size="11" font-weight="bold" fill="#4338ca">Hydrogen Base Pairs (A-T, C-G)</text>
+      </svg>`,
+
+      neuron: `<svg viewBox="0 0 300 200" class="w-full h-full max-h-52">
+        <rect width="300" height="200" fill="#faf5ff" rx="12"/>
+        <!-- Cyton / Cell Body -->
+        <polygon points="50,100 30,60 70,70 80,40 95,85 110,60 115,95 85,120 40,120" fill="#e9d5ff" stroke="#7e22ce" stroke-width="2"/>
+        <circle cx="75" cy="88" r="10" fill="#9333ea"/>
+        <!-- Axon -->
+        <rect x="115" y="92" width="120" height="12" fill="#fed7aa" rx="4" stroke="#ea580c"/>
+        <!-- Myelin Sheath Swelling -->
+        <rect x="130" y="88" width="25" height="20" fill="#fdba74" rx="4"/>
+        <rect x="165" y="88" width="25" height="20" fill="#fdba74" rx="4"/>
+        <rect x="200" y="88" width="25" height="20" fill="#fdba74" rx="4"/>
+        <!-- Axon Terminals -->
+        <path d="M 235 98 L 270 70 M 235 98 L 275 100 M 235 98 L 265 125" stroke="#ea580c" stroke-width="2"/>
+        <!-- Labels -->
+        <text x="35" y="30" font-size="10" font-weight="bold" fill="#6b21a8">Dendrites & Cyton</text>
+        <text x="155" y="75" font-size="10" font-weight="bold" fill="#c2410c">Myelinated Axon</text>
+        <text x="220" y="150" font-size="10" font-weight="bold" fill="#c2410c">Axon Terminals</text>
+      </svg>`,
+
+      chloroplast: `<svg viewBox="0 0 300 200" class="w-full h-full max-h-52">
+        <rect width="300" height="200" fill="#f0fdf4" rx="12"/>
+        <!-- Outer / Inner Membrane -->
+        <ellipse cx="150" cy="100" rx="120" ry="70" fill="#d1fae5" stroke="#15803d" stroke-width="4"/>
+        <ellipse cx="150" cy="100" rx="112" ry="63" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+        <!-- Thylakoid Stacks (Grana) -->
+        <g fill="#22c55e" stroke="#15803d">
+          <rect x="90" y="70" width="30" height="8" rx="3"/>
+          <rect x="90" y="82" width="30" height="8" rx="3"/>
+          <rect x="90" y="94" width="30" height="8" rx="3"/>
+          <rect x="90" y="106" width="30" height="8" rx="3"/>
+
+          <rect x="170" y="75" width="30" height="8" rx="3"/>
+          <rect x="170" y="87" width="30" height="8" rx="3"/>
+          <rect x="170" y="99" width="30" height="8" rx="3"/>
+        </g>
+        <!-- Stroma Frets -->
+        <line x1="120" y1="90" x2="170" y2="90" stroke="#16a34a" stroke-width="2"/>
+        <!-- Labels -->
+        <text x="80" y="140" font-size="10" font-weight="bold" fill="#14532d">Granum (Thylakoid Stack)</text>
+        <text x="175" y="130" font-size="10" font-weight="bold" fill="#14532d">Stroma Matrix</text>
+      </svg>`
+    };
+
+    /* ==========================================================================
+       2. DEFAULT PRE-LOADED BIOLOGY QUESTIONS (CLASSES 9-12)
+       ========================================================================== */
+    const DEFAULT_QUESTIONS = [
+      {
+        id: 'q1',
+        classCategory: 'Class 9',
+        type: 'mcq',
+        text: 'Which cellular organelle is famously designated as the "Powerhouse of the Cell" due to ATP generation?',
+        options: ['Golgi Apparatus', 'Mitochondria', 'Endoplasmic Reticulum', 'Lysosome'],
+        correctIndex: 1,
+        diagramKey: 'plant_cell',
+        modelAnswer: ''
+      },
+      {
+        id: 'q2',
+        classCategory: 'Class 10',
+        type: 'mcq',
+        text: 'Where does the light-dependent reaction stage of photosynthesis specifically take place inside plant cells?',
+        options: ['Stroma Matrix', 'Thylakoid Membrane', 'Outer Chloroplast Membrane', 'Cytosol'],
+        correctIndex: 1,
+        diagramKey: 'chloroplast',
+        modelAnswer: ''
+      },
+      {
+        id: 'q3',
+        classCategory: 'Class 10',
+        type: 'subjective',
+        text: 'Explain why double circulation in the human heart is necessary for warm-blooded vertebrates.',
+        options: [],
+        correctIndex: -1,
+        diagramKey: 'human_heart',
+        modelAnswer: 'Double circulation prevents mixing of oxygenated and deoxygenated blood, ensuring high metabolic energy supply for thermoregulation.'
+      },
+      {
+        id: 'q4',
+        classCategory: 'Class 11',
+        type: 'mcq',
+        text: 'In the Watson-Crick double helix model of DNA, how many hydrogen bonds link Adenine (A) to Thymine (T)?',
+        options: ['1 Hydrogen Bond', '2 Hydrogen Bonds', '3 Hydrogen Bonds', 'Covalent Peptide Bond'],
+        correctIndex: 1,
+        diagramKey: 'dna_helix',
+        modelAnswer: ''
+      },
+      {
+        id: 'q5',
+        classCategory: 'Class 11',
+        type: 'subjective',
+        text: 'Describe the main function of the Myelin sheath surrounding the axon of a motor neuron.',
+        options: [],
+        correctIndex: -1,
+        diagramKey: 'neuron',
+        modelAnswer: 'The myelin sheath acts as an electrical insulator allowing rapid saltatory conduction of nerve impulses across Nodes of Ranvier.'
+      },
+      {
+        id: 'q6',
+        classCategory: 'Class 12',
+        type: 'mcq',
+        text: 'Which heat-stable enzyme is essential for automated strand amplification in Polymerase Chain Reaction (PCR)?',
+        options: ['RNA Polymerase II', 'Taq DNA Polymerase', 'DNA Ligase', 'EcoRI Restriction Endonuclease'],
+        correctIndex: 1,
+        diagramKey: 'dna_helix',
+        modelAnswer: ''
+      }
+    ];
+
+    const TRIVIA_FACTS = [
+      "Human DNA is about 99.9% identical from person to person. Only 0.1% makes all the unique genetic differences!",
+      "The human heart beats approximately 100,000 times per day, pumping over 7,500 liters of oxygen-rich blood.",
+      "Chloroplasts and Mitochondria have their own circular DNA and 70S ribosomes, supporting the Endosymbiotic Theory!",
+      "A single human neuron can transmit impulses at speeds up to 120 meters per second (over 260 mph)."
+    ];
+
+    /* ==========================================================================
+       3. GLOBAL APPLICATION STATE & SYNC SYSTEM
+       ========================================================================== */
+    const STORAGE_KEY = 'ssbio_live_state_v1';
+
+    let appState = {
+      role: 'teacher', // 'teacher' or 'student'
+      roomCode: 'BIO-9021',
+      targetClassFilter: 'ALL',
+      questions: [],
+      activeQuestionId: null,
+      
+      // Waiting Room & Registered Students State
+      waitingStudents: [], // [{ id, name, classVal, roll, requestedAt }]
+      admittedStudents: [], // [{ id, name, classVal, roll, score, status }]
+
+      // Current Student Session
+      studentProfile: null, // { id, name, classVal, roll, isAdmitted }
+      attachedDiagramTemp: null // Temporary diagram attached during authoring
+    };
+
+    /* ==========================================================================
+       4. INITIALIZATION & LOCALSTORAGE SYNC ENGINE
+       ========================================================================== */
+    window.onload = function() {
+      // Check URL parameters for direct link join
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramRoom = urlParams.get('room');
+      const paramRole = urlParams.get('role');
+
+      if (paramRoom) {
+        appState.roomCode = paramRoom;
+      }
+
+      // Load State from LocalStorage or initialize default
+      loadStateFromStorage();
+
+      // Override role if specified in URL or default to teacher
+      if (paramRole === 'student') {
+        appState.role = 'student';
+      }
+
+      // Setup Listeners for real-time cross-tab synchronization
+      window.addEventListener('storage', handleCrossTabSync);
+
+      // Render Lucide Icons & Initial UI
+      renderAppUI();
+      lucide.createIcons();
+    };
+
+    function loadStateFromStorage() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          appState.questions = parsed.questions || DEFAULT_QUESTIONS;
+          appState.waitingStudents = parsed.waitingStudents || [];
+          appState.admittedStudents = parsed.admittedStudents || [];
+          appState.activeQuestionId = parsed.activeQuestionId || null;
+        } else {
+          appState.questions = DEFAULT_QUESTIONS;
+          saveStateToStorage();
+        }
+      } catch (e) {
+        console.error("Storage error:", e);
+        appState.questions = DEFAULT_QUESTIONS;
+      }
+    }
+
+    function saveStateToStorage() {
+      try {
+        const payload = {
+          questions: appState.questions,
+          waitingStudents: appState.waitingStudents,
+          admittedStudents: appState.admittedStudents,
+          activeQuestionId: appState.activeQuestionId,
+          lastUpdated: Date.now()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (e) {
+        console.error("Error saving state:", e);
+      }
+    }
+
+    function handleCrossTabSync(event) {
+      if (event.key === STORAGE_KEY) {
+        loadStateFromStorage();
+        renderAppUI();
+      }
+    }
+
+    /* ==========================================================================
+       5. ROLE SWITCHING & ROUTING LOGIC
+       ========================================================================== */
+    function switchRole(newRole) {
+      appState.role = newRole;
+      
+      const teacherBtn = document.getElementById('roleTeacherBtn');
+      const studentBtn = document.getElementById('roleStudentBtn');
+      const teacherView = document.getElementById('teacherView');
+      const studentView = document.getElementById('studentView');
+
+      if (newRole === 'teacher') {
+        teacherBtn.className = "px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1 bg-emerald-600 text-white shadow-sm";
+        studentBtn.className = "px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1 text-slate-300 hover:text-white";
+        teacherView.classList.remove('hidden');
+        studentView.classList.add('hidden');
+      } else {
+        studentBtn.className = "px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1 bg-emerald-600 text-white shadow-sm";
+        teacherBtn.className = "px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1 text-slate-300 hover:text-white";
+        studentView.classList.remove('hidden');
+        teacherView.classList.add('hidden');
+      }
+
+      renderAppUI();
+    }
+
+    function setTargetClass(classFilter) {
+      appState.targetClassFilter = classFilter;
+      
+      // Update Class Filter Buttons Visual Style
+      document.querySelectorAll('.class-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-class') === classFilter) {
+          btn.className = 'class-filter-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition bg-emerald-600 text-white shadow-sm';
+        } else {
+          btn.className = 'class-filter-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200';
+        }
+      });
+
+      renderAppUI();
+    }
+
+    /* ==========================================================================
+       6. LINK GENERATION & COPY FUNCTIONALITY
+       ========================================================================== */
+    function copyStudentJoinLink() {
+      const baseUrl = window.location.origin + window.location.pathname;
+      const joinUrl = `${baseUrl}?room=${appState.roomCode}&role=student`;
+
+      // Copy using legacy execCommand for iframe compatibility
+      const tempInput = document.createElement('input');
+      tempInput.value = joinUrl;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand('copy');
+        showToast('Student Join Link copied! Share with your class.');
+      } catch (err) {
+        showToast('Link generated: ' + joinUrl);
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    /* ==========================================================================
+       7. TEACHER WAITING ROOM PERMISSION CONTROLLER
+       ========================================================================== */
+    function admitStudent(studentId) {
+      const index = appState.waitingStudents.findIndex(s => s.id === studentId);
+      if (index !== -1) {
+        const student = appState.waitingStudents.splice(index, 1)[0];
+        student.status = 'Admitted';
+        student.score = 0;
+        appState.admittedStudents.push(student);
+
+        // If the current student tab matches this student ID, update local student state
+        if (appState.studentProfile && appState.studentProfile.id === studentId) {
+          appState.studentProfile.isAdmitted = true;
+        }
+
+        saveStateToStorage();
+        renderAppUI();
+        showToast(`Admitted ${student.name} to the class!`);
+      }
+    }
+
+    function denyStudent(studentId) {
+      appState.waitingStudents = appState.waitingStudents.filter(s => s.id !== studentId);
+      saveStateToStorage();
+      renderAppUI();
+      showToast('Student request denied.');
+    }
+
+    function admitAllStudents() {
+      if (appState.waitingStudents.length === 0) {
+        showToast('No students waiting for admission.');
+        return;
+      }
+      appState.waitingStudents.forEach(student => {
+        student.status = 'Admitted';
+        student.score = 0;
+        appState.admittedStudents.push(student);
+      });
+      appState.waitingStudents = [];
+
+      if (appState.studentProfile) {
+        appState.studentProfile.isAdmitted = true;
+      }
+
+      saveStateToStorage();
+      renderAppUI();
+      showToast('Admitted all pending students!');
+    }
+
+    function clearWaitingRoom() {
+      appState.waitingStudents = [];
+      saveStateToStorage();
+      renderAppUI();
+      showToast('Waiting room cleared.');
+    }
+
+    /* ==========================================================================
+       8. QUESTION AUTHORING & DIAGRAM HANDLERS
+       ========================================================================== */
+    function toggleQTypeFields() {
+      const type = document.getElementById('qType').value;
+      const mcqFields = document.getElementById('mcqFields');
+      const subjectiveFields = document.getElementById('subjectiveFields');
+
+      if (type === 'mcq') {
+        mcqFields.classList.remove('hidden');
+        subjectiveFields.classList.add('hidden');
+      } else {
+        mcqFields.classList.add('hidden');
+        subjectiveFields.classList.remove('hidden');
+      }
+    }
+
+    function handlePresetDiagramChange() {
+      const key = document.getElementById('presetDiagram').value;
+      if (key && BIOLOGY_DIAGRAMS[key]) {
+        appState.attachedDiagramTemp = { type: 'preset', value: key };
+        showDiagramPreview('Preset: ' + key.replace('_', ' ').toUpperCase(), BIOLOGY_DIAGRAMS[key]);
+      } else {
+        removeAttachedDiagram();
+      }
+    }
+
+    function handleCustomFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64Data = e.target.result;
+          appState.attachedDiagramTemp = { type: 'custom', value: base64Data };
+          showDiagramPreview(file.name, `<img src="${base64Data}" class="max-h-full max-w-full object-contain">`);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function showDiagramPreview(label, innerHTML) {
+      const container = document.getElementById('diagramPreviewContainer');
+      const thumb = document.getElementById('diagramPreviewThumb');
+      const labelEl = document.getElementById('diagramPreviewLabel');
+
+      thumb.innerHTML = innerHTML;
+      labelEl.textContent = label;
+      container.classList.remove('hidden');
+    }
+
+    function removeAttachedDiagram() {
+      appState.attachedDiagramTemp = null;
+      document.getElementById('presetDiagram').value = '';
+      document.getElementById('diagramFileUpload').value = '';
+      document.getElementById('diagramPreviewContainer').classList.add('hidden');
+    }
+
+    function handleCreateQuestion(e) {
+      e.preventDefault();
+
+      const qClass = document.getElementById('qClass').value;
+      const qType = document.getElementById('qType').value;
+      const qText = document.getElementById('qText').value;
+
+      let options = [];
+      let correctIndex = -1;
+      let modelAnswer = '';
+
+      if (qType === 'mcq') {
+        options = [
+          document.getElementById('opt0').value,
+          document.getElementById('opt1').value,
+          document.getElementById('opt2').value,
+          document.getElementById('opt3').value
+        ];
+        const checkedRadio = document.querySelector('input[name="correctOption"]:checked');
+        correctIndex = checkedRadio ? parseInt(checkedRadio.value) : 0;
+      } else {
+        modelAnswer = document.getElementById('modelAnswer').value;
+      }
+
+      const newQ = {
+        id: 'q_' + Date.now(),
+        classCategory: qClass,
+        type: qType,
+        text: qText,
+        options: options,
+        correctIndex: correctIndex,
+        diagramKey: appState.attachedDiagramTemp ? appState.attachedDiagramTemp.value : null,
+        diagramType: appState.attachedDiagramTemp ? appState.attachedDiagramTemp.type : null,
+        modelAnswer: modelAnswer
+      };
+
+      appState.questions.unshift(newQ);
+      saveStateToStorage();
+      renderAppUI();
+
+      // Reset form
+      document.getElementById('createQuestionForm').reset();
+      removeAttachedDiagram();
+      showToast('New biology question added to Question Bank!');
+    }
+
+    function resetQuestionBankToDefault() {
+      appState.questions = DEFAULT_QUESTIONS;
+      saveStateToStorage();
+      renderAppUI();
+      showToast('Question Bank reset to NCERT standard presets.');
+    }
+
+    function broadcastQuestion(qId) {
+      appState.activeQuestionId = qId;
+      saveStateToStorage();
+      renderAppUI();
+      showToast('Question broadcasted live to all student screens!');
+    }
+
+    function stopBroadcast() {
+      appState.activeQuestionId = null;
+      saveStateToStorage();
+      renderAppUI();
+      showToast('Live question broadcast ended.');
+    }
+
+    /* ==========================================================================
+       9. STUDENT PORTAL REGISTRATION & QUIZ INTERACTION
+       ========================================================================== */
+    function handleStudentRegister(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('stName').value.trim();
+      const classVal = document.getElementById('stClass').value;
+      const roll = document.getElementById('stRoll').value.trim();
+
+      const studentObj = {
+        id: 'st_' + Date.now(),
+        name: name,
+        classVal: classVal,
+        roll: roll,
+        requestedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: 'Waiting',
+        score: 0
+      };
+
+      appState.studentProfile = studentObj;
+      appState.waitingStudents.push(studentObj);
+
+      saveStateToStorage();
+      renderAppUI();
+      showToast('Admission request sent to Soumendra Sir!');
+    }
+
+    function simulateSelfAdmit() {
+      if (appState.studentProfile) {
+        admitStudent(appState.studentProfile.id);
+      } else {
+        const dummy = {
+          id: 'st_demo',
+          name: 'Demo Student',
+          classVal: 'Class 11',
+          roll: '1',
+          status: 'Admitted',
+          score: 0
+        };
+        appState.studentProfile = dummy;
+        appState.admittedStudents.push(dummy);
+        saveStateToStorage();
+        renderAppUI();
+      }
+    }
+
+    function submitMcqAnswer(selectedIndex) {
+      const activeQ = appState.questions.find(q => q.id === appState.activeQuestionId);
+      if (!activeQ) return;
+
+      const isCorrect = selectedIndex === activeQ.correctIndex;
+      const feedbackBox = document.getElementById('stFeedbackBox');
+      const feedbackText = document.getElementById('stFeedbackText');
+      const feedbackScore = document.getElementById('stFeedbackScore');
+
+      feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-800', 'bg-red-50', 'border-red-200', 'text-red-800');
+
+      if (isCorrect) {
+        feedbackBox.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-800');
+        feedbackText.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i> Correct Answer! Great job.`;
+        feedbackScore.textContent = '+10 Pts';
+
+        // Update score in state
+        if (appState.studentProfile) {
+          const student = appState.admittedStudents.find(s => s.id === appState.studentProfile.id);
+          if (student) {
+            student.score = (student.score || 0) + 10;
+            saveStateToStorage();
+          }
+        }
+      } else {
+        const correctText = activeQ.options[activeQ.correctIndex];
+        feedbackBox.classList.add('bg-red-50', 'border-red-200', 'text-red-800');
+        feedbackText.innerHTML = `<i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i> Incorrect. Correct option was: <strong>${correctText}</strong>`;
+        feedbackScore.textContent = '+0 Pts';
+      }
+
+      lucide.createIcons();
+      renderTeacherLeaderboard();
+      renderStudentLeaderboard();
+
+      // Show standby view after 3 seconds
+      setTimeout(() => {
+        document.getElementById('studentQuizCard').classList.add('hidden');
+        document.getElementById('studentStandbyCard').classList.remove('hidden');
+      }, 3500);
+    }
+
+    function submitSubjectiveAnswer() {
+      const input = document.getElementById('stSubjectiveInput').value.trim();
+      if (!input) {
+        showToast('Please type your response before submitting.');
+        return;
+      }
+
+      const activeQ = appState.questions.find(q => q.id === appState.activeQuestionId);
+      const feedbackBox = document.getElementById('stFeedbackBox');
+      const feedbackText = document.getElementById('stFeedbackText');
+      const feedbackScore = document.getElementById('stFeedbackScore');
+
+      feedbackBox.classList.remove('hidden', 'bg-red-50', 'border-red-200', 'text-red-800');
+      feedbackBox.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-800');
+      
+      const keyPoints = activeQ && activeQ.modelAnswer ? activeQ.modelAnswer : 'Answer submitted for evaluation.';
+      feedbackText.innerHTML = `<div><strong class="block mb-1">Submitted for Soumendra Sir's Review!</strong><span class="text-xs text-slate-600">Model Key: ${keyPoints}</span></div>`;
+      feedbackScore.textContent = 'Submitted';
+
+      // Grant 10 pts for subjective completion
+      if (appState.studentProfile) {
+        const student = appState.admittedStudents.find(s => s.id === appState.studentProfile.id);
+        if (student) {
+          student.score = (student.score || 0) + 10;
+          saveStateToStorage();
+        }
+      }
+
+      lucide.createIcons();
+      renderTeacherLeaderboard();
+      renderStudentLeaderboard();
+
+      setTimeout(() => {
+        document.getElementById('studentQuizCard').classList.add('hidden');
+        document.getElementById('studentStandbyCard').classList.remove('hidden');
+      }, 4000);
+    }
+
+    /* ==========================================================================
+       10. CSV EXPORTER & LEADERBOARD RENDERING
+       ========================================================================== */
+    function renderTeacherLeaderboard() {
+      const tbody = document.getElementById('teacherLeaderboardBody');
+      const notice = document.getElementById('emptyLeaderboardNotice');
+
+      // Sort admitted students by score descending
+      const sorted = [...appState.admittedStudents].sort((a, b) => (b.score || 0) - (a.score || 0));
+
+      if (sorted.length === 0) {
+        tbody.innerHTML = '';
+        notice.classList.remove('hidden');
+        return;
+      }
+
+      notice.classList.add('hidden');
+      tbody.innerHTML = sorted.map((student, idx) => {
+        let rankBadge = `<span class="font-bold text-slate-600">${idx + 1}</span>`;
+        if (idx === 0) rankBadge = `<span class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">🥇</span>`;
+        if (idx === 1) rankBadge = `<span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">🥈</span>`;
+        if (idx === 2) rankBadge = `<span class="w-5 h-5 rounded-full bg-amber-800/20 text-amber-900 flex items-center justify-center font-bold text-xs">🥉</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 font-medium">${rankBadge}</td>
+            <td class="py-2.5 font-semibold text-slate-800">
+              ${student.name}
+              <span class="block text-[10px] text-slate-400 font-normal">Roll: ${student.roll || 'N/A'}</span>
+            </td>
+            <td class="py-2.5"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium">${student.classVal}</span></td>
+            <td class="py-2.5 text-right font-bold text-emerald-600 text-sm">${student.score || 0} pts</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderStudentLeaderboard() {
+      const container = document.getElementById('studentLeaderboardList');
+      const sorted = [...appState.admittedStudents].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+
+      if (sorted.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 italic text-center py-2">Leaderboard will update once scores are recorded.</p>`;
+        return;
+      }
+
+      container.innerHTML = sorted.map((s, idx) => `
+        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-slate-400 w-4 text-center">${idx + 1}.</span>
+            <span class="font-medium text-slate-700">${s.name} (${s.classVal})</span>
+          </div>
+          <span class="font-bold text-emerald-600">${s.score || 0} pts</span>
+        </div>
+      `).join('');
+    }
+
+    function exportLeaderboardCSV() {
+      if (appState.admittedStudents.length === 0) {
+        showToast('No student data available to export.');
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,Rank,Student Name,Class,Roll Number,Score,Status\n";
+      const sorted = [...appState.admittedStudents].sort((a, b) => (b.score || 0) - (a.score || 0));
+
+      sorted.forEach((s, idx) => {
+        csvContent += `${idx + 1},"${s.name}","${s.classVal}","${s.roll || ''}",${s.score || 0},"${s.status}"\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Soumendra_Sir_Biology_Quiz_Results_${appState.roomCode}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('Leaderboard exported as CSV successfully!');
+    }
+
+    /* ==========================================================================
+       11. MAIN UI RENDER LOOP
+       ========================================================================== */
+    function renderAppUI() {
+      // Update Stat Counter Labels
+      document.getElementById('statAdmittedCount').textContent = appState.admittedStudents.length;
+      document.getElementById('statWaitingCount').textContent = appState.waitingStudents.length;
+
+      // Active Broadcast Question Status
+      const activeQ = appState.questions.find(q => q.id === appState.activeQuestionId);
+      const statBroadcastStatus = document.getElementById('statBroadcastStatus');
+      const statBroadcastSub = document.getElementById('statBroadcastSub');
+
+      if (activeQ) {
+        statBroadcastStatus.textContent = activeQ.classCategory + ': ' + activeQ.text.substring(0, 22) + '...';
+        statBroadcastStatus.className = 'text-sm font-bold text-emerald-600 truncate max-w-[180px]';
+        statBroadcastSub.textContent = 'Currently Live on Student Screens';
+      } else {
+        statBroadcastStatus.textContent = 'No Question Live';
+        statBroadcastStatus.className = 'text-lg font-bold text-slate-800 mt-1 truncate max-w-[180px]';
+        statBroadcastSub.textContent = 'Click "Broadcast" to start';
+      }
+
+      // Render Waiting Room List for Teacher
+      renderWaitingRoomList();
+
+      // Render Question Repository List for Teacher
+      renderQuestionBankList();
+
+      // Render Leaderboards
+      renderTeacherLeaderboard();
+      renderStudentLeaderboard();
+
+      // Render Student View State Machine
+      renderStudentViewState(activeQ);
+
+      lucide.createIcons();
+    }
+
+    function renderWaitingRoomList() {
+      const container = document.getElementById('waitingRoomList');
+      if (appState.waitingStudents.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-6 text-center text-slate-400 text-sm italic">
+            No students currently in waiting room. Share student link above to allow students to join!
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = appState.waitingStudents.map(student => `
+        <div class="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200 flex items-center justify-between shadow-sm">
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm">${student.name}</h4>
+            <div class="flex items-center space-x-2 text-xs text-slate-500 mt-0.5">
+              <span class="font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">${student.classVal}</span>
+              <span>Roll: ${student.roll}</span>
+              <span>• ${student.requestedAt}</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button onclick="admitStudent('${student.id}')" class="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition shadow-xs" title="Admit Student">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </button>
+            <button onclick="denyStudent('${student.id}')" class="p-1.5 bg-slate-200 hover:bg-red-100 hover:text-red-600 text-slate-600 rounded-lg transition" title="Deny Request">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderQuestionBankList() {
+      const container = document.getElementById('questionBankList');
+      let filtered = appState.questions;
+
+      if (appState.targetClassFilter !== 'ALL') {
+        filtered = filtered.filter(q => q.classCategory === appState.targetClassFilter);
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="py-8 text-center text-slate-400 text-xs italic">No questions found for ${appState.targetClassFilter}. Create one above!</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(q => {
+        const isLive = appState.activeQuestionId === q.id;
+        let diagramBadge = '';
+        if (q.diagramKey) {
+          diagramBadge = `<span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-semibold flex items-center gap-1 border border-sky-200">
+            <i data-lucide="image" class="w-3 h-3"></i> Diagram
+          </span>`;
+        }
+
+        return `
+          <div class="p-4 rounded-2xl border ${isLive ? 'border-emerald-500 bg-emerald-50/40 ring-2 ring-emerald-400/20' : 'border-slate-200 bg-white hover:border-slate-300'} transition shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700">${q.classCategory}</span>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase ${q.type === 'mcq' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}">${q.type}</span>
+                ${diagramBadge}
+              </div>
+
+              <div class="flex items-center space-x-2">
+                ${isLive ? `
+                  <button onclick="stopBroadcast()" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs">
+                    <i data-lucide="square" class="w-3.5 h-3.5"></i> Stop Live
+                  </button>
+                ` : `
+                  <button onclick="broadcastQuestion('${q.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs">
+                    <i data-lucide="radio" class="w-3.5 h-3.5"></i> Broadcast Live
+                  </button>
+                `}
+              </div>
+            </div>
+
+            <p class="text-sm font-semibold text-slate-800 leading-snug">${q.text}</p>
+
+            ${q.type === 'mcq' ? `
+              <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 pt-1">
+                ${q.options.map((opt, i) => `
+                  <div class="px-2.5 py-1.5 rounded-lg border ${i === q.correctIndex ? 'bg-emerald-100/70 border-emerald-300 font-bold text-emerald-900' : 'bg-slate-50 border-slate-200'}">
+                    ${String.fromCharCode(65 + i)}. ${opt}
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <p class="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                <strong class="text-slate-700">Model Key:</strong> ${q.modelAnswer || 'N/A'}
+              </p>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderStudentViewState(activeQ) {
+      const registerCard = document.getElementById('studentRegisterCard');
+      const waitingCard = document.getElementById('studentWaitingCard');
+      const quizCard = document.getElementById('studentQuizCard');
+      const standbyCard = document.getElementById('studentStandbyCard');
+
+      // Check if student profile exists locally or in state
+      if (!appState.studentProfile) {
+        registerCard.classList.remove('hidden');
+        waitingCard.classList.add('hidden');
+        quizCard.classList.add('hidden');
+        standbyCard.classList.add('hidden');
+        return;
+      }
+
+      // Check if student is admitted by teacher
+      const matchingAdmitted = appState.admittedStudents.find(s => s.id === appState.studentProfile.id);
+
+      if (!matchingAdmitted && appState.studentProfile.status === 'Waiting') {
+        registerCard.classList.add('hidden');
+        waitingCard.classList.remove('hidden');
+        quizCard.classList.add('hidden');
+        standbyCard.classList.add('hidden');
+        
+        document.getElementById('waitingStudentNameDisplay').textContent = appState.studentProfile.name;
+        // Cycle fun trivia
+        const randomTrivia = TRIVIA_FACTS[Math.floor(Math.random() * TRIVIA_FACTS.length)];
+        document.getElementById('bioTriviaText').textContent = `"${randomTrivia}"`;
+        return;
+      }
+
+      // Student is Admitted!
+      registerCard.classList.add('hidden');
+      waitingCard.classList.add('hidden');
+
+      if (activeQ) {
+        quizCard.classList.remove('hidden');
+        standbyCard.classList.add('hidden');
+
+        // Render Active Question for Student
+        document.getElementById('stQuestionClassBadge').textContent = activeQ.classCategory;
+        document.getElementById('stQuestionTypeBadge').textContent = activeQ.type.toUpperCase() + ' QUESTION';
+        document.getElementById('stQuestionTitle').textContent = activeQ.text;
+
+        // Render Attached Diagram if available
+        const diagramBox = document.getElementById('stDiagramBox');
+        const diagramHolder = document.getElementById('stDiagramHolder');
+
+        if (activeQ.diagramKey) {
+          diagramBox.classList.remove('hidden');
+          if (BIOLOGY_DIAGRAMS[activeQ.diagramKey]) {
+            diagramHolder.innerHTML = BIOLOGY_DIAGRAMS[activeQ.diagramKey];
+          } else if (activeQ.diagramType === 'custom') {
+            diagramHolder.innerHTML = `<img src="${activeQ.diagramKey}" class="max-h-56 object-contain">`;
+          } else {
+            diagramHolder.innerHTML = `<span class="text-xs text-slate-400">Diagram attached</span>`;
+          }
+        } else {
+          diagramBox.classList.add('hidden');
+          diagramHolder.innerHTML = '';
+        }
+
+        // Render MCQ options or Subjective Box
+        const mcqContainer = document.getElementById('stMcqContainer');
+        const mcqOptionsList = document.getElementById('stMcqOptionsList');
+        const subjectiveContainer = document.getElementById('stSubjectiveContainer');
+        document.getElementById('stFeedbackBox').classList.add('hidden');
+
+        if (activeQ.type === 'mcq') {
+          mcqContainer.classList.remove('hidden');
+          subjectiveContainer.classList.add('hidden');
+
+          mcqOptionsList.innerHTML = activeQ.options.map((opt, idx) => `
+            <button onclick="submitMcqAnswer(${idx})" class="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition font-semibold text-sm text-slate-800 flex items-center space-x-3 shadow-xs group">
+              <span class="w-7 h-7 rounded-xl bg-slate-100 group-hover:bg-emerald-600 group-hover:text-white text-slate-600 flex items-center justify-center font-bold text-xs transition">
+                ${String.fromCharCode(65 + idx)}
+              </span>
+              <span>${opt}</span>
+            </button>
+          `).join('');
+        } else {
+          mcqContainer.classList.add('hidden');
+          subjectiveContainer.classList.remove('hidden');
+          document.getElementById('stSubjectiveInput').value = '';
+        }
+
+      } else {
+        // No active question broadcasted by teacher yet
+        quizCard.classList.add('hidden');
+        standbyCard.classList.remove('hidden');
+      }
+    }
+
+    /* ==========================================================================
+       12. HELPER UTILITIES
+       ========================================================================== */
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toastMsg');
+      msg.textContent = message;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
